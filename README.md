@@ -110,6 +110,15 @@ crawler → parser → checks (seo/a11y/perf) → scoring → report → render
                                   links checker ↗
 ```
 
+## 📦 Publishing (maintainers)
+
+Publishing to PyPI is a **manual** action via
+[`publish.yml`](.github/workflows/publish.yml) using **Trusted Publishing** (no API
+tokens). One-time setup on [pypi.org](https://pypi.org): *Your account → Publishing →
+Add a pending publisher* with project `site-doctor`, owner `aashishbharti04`, repo
+`site-doctor`, workflow `publish.yml`, environment `pypi`. Then run the workflow from the
+Actions tab.
+
 ## 🛠️ Develop
 
 ```bash
