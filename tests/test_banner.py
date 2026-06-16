@@ -8,7 +8,7 @@ from sitedoctor.banner import render_banner
 def test_banner_contains_brand_text():
     out = render_banner(color=False, unicode_ok=True)
     assert "PGLU" in out
-    assert "pglu-site-doctor" in out
+    assert "site-doctor" in out
 
 
 def test_banner_unicode_uses_block_chars():

@@ -1,12 +1,12 @@
-# 🤝 Contributing to pglu-site-doctor
+# 🤝 Contributing to site-doctor
 
 Thanks for helping make the web healthier! Contributions of all sizes are welcome.
 
 ## Quick start
 
 ```bash
-git clone https://github.com/aashishbharti04/pglu-site-doctor
-cd pglu-site-doctor
+git clone https://github.com/aashishbharti04/site-doctor
+cd site-doctor
 pip install -e ".[dev]"
 pytest -q
 ```

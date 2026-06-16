@@ -26,7 +26,7 @@ def sample_report() -> SiteReport:
 
 def test_markdown_contains_key_sections():
     md = to_markdown(sample_report())
-    assert "# pglu-site-doctor report" in md
+    assert "# site-doctor report" in md
     assert "Health Score:** 84.0/100" in md
     assert "| SEO | 94.0 |" in md
     assert "img-alt-missing" not in md          # we show the message, not the code

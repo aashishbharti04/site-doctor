@@ -11,7 +11,7 @@ from urllib.parse import urljoin, urldefrag, urlparse
 
 from .parser import PageData, parse_html, same_domain
 
-USER_AGENT = "pglu-site-doctor/0.3 (+https://github.com/aashishbharti04/pglu-site-doctor)"
+USER_AGENT = "site-doctor/0.3 (+https://github.com/aashishbharti04/site-doctor)"
 
 
 @dataclass

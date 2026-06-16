@@ -7,10 +7,10 @@
 ██╔═══╝ ██║   ██║██║     ██║   ██║
 ██║     ╚██████╔╝███████╗╚██████╔╝
 ╚═╝      ╚═════╝ ╚══════╝ ╚═════╝
-PGLU · pglu-site-doctor
+PGLU · site-doctor
 ```
 
-# 🩺 pglu-site-doctor
+# 🩺 site-doctor
 
 ### Crawl any website and audit **SEO · Accessibility · Performance · Broken links** — from your terminal.
 
@@ -20,7 +20,7 @@ output JSON for dashboards, or gate your CI/CD on a minimum health score.
 <p>
   <img alt="Python" src="https://img.shields.io/badge/Python-3.9%2B-00E5FF?style=for-the-badge&logo=python&logoColor=white&labelColor=0D1117">
   <img alt="Zero deps" src="https://img.shields.io/badge/Dependencies-ZERO-FF2E97?style=for-the-badge&labelColor=0D1117">
-  <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/aashishbharti04/pglu-site-doctor/ci.yml?style=for-the-badge&logo=githubactions&logoColor=white&labelColor=0D1117&color=00FFA3">
+  <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/aashishbharti04/site-doctor/ci.yml?style=for-the-badge&logo=githubactions&logoColor=white&labelColor=0D1117&color=00FFA3">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-9D4EFF?style=for-the-badge&labelColor=0D1117">
 </p>
 
@@ -29,7 +29,7 @@ output JSON for dashboards, or gate your CI/CD on a minimum health score.
 ---
 
 ```text
-  pglu-site-doctor — https://example.com
+  site-doctor — https://example.com
   Pages audited: 12  ·  Links checked: 140
 
   Health Score: 82.4/100
@@ -72,7 +72,7 @@ and ANSI colors work even in legacy Windows consoles.
 ## 🚀 Install
 
 ```bash
-pip install pglu-site-doctor
+pip install site-doctor
 ```
 
 Or run from source (no install): `PYTHONPATH=src python -m sitedoctor <url>`
@@ -80,16 +80,16 @@ Or run from source (no install): `PYTHONPATH=src python -m sitedoctor <url>`
 ## 🕹️ Usage
 
 ```bash
-pglu-site-doctor example.com                  # full audit (crawls up to 20 pages)
-pglu-site-doctor https://mysite.com --max-pages 50 --max-depth 3
-pglu-site-doctor mysite.com --json > report.json    # machine-readable
-pglu-site-doctor mysite.com --no-external           # skip external link checks (faster)
-pglu-site-doctor mysite.com --fail-under 80         # exit 1 if score < 80  (great for CI)
+site-doctor example.com                  # full audit (crawls up to 20 pages)
+site-doctor https://mysite.com --max-pages 50 --max-depth 3
+site-doctor mysite.com --json > report.json    # machine-readable
+site-doctor mysite.com --no-external           # skip external link checks (faster)
+site-doctor mysite.com --fail-under 80         # exit 1 if score < 80  (great for CI)
 
-pglu-site-doctor mysite.com --sitemap               # audit every URL in /sitemap.xml
-pglu-site-doctor mysite.com --html report.html      # client-ready HTML report
-pglu-site-doctor mysite.com --md report.md          # Markdown report
-pglu-site-doctor mysite.com --csv issues.csv        # CSV of all issues & links (spreadsheets)
+site-doctor mysite.com --sitemap               # audit every URL in /sitemap.xml
+site-doctor mysite.com --html report.html      # client-ready HTML report
+site-doctor mysite.com --md report.md          # Markdown report
+site-doctor mysite.com --csv issues.csv        # CSV of all issues & links (spreadsheets)
 ```
 
 ### Options
@@ -119,8 +119,8 @@ pglu-site-doctor mysite.com --csv issues.csv        # CSV of all issues & links 
 ```yaml
 - name: Audit site health
   run: |
-    pip install pglu-site-doctor
-    pglu-site-doctor https://your-site.com --fail-under 80 --min-security 70 --junit site.xml
+    pip install site-doctor
+    site-doctor https://your-site.com --fail-under 80 --min-security 70 --junit site.xml
 ```
 
 The build fails if the overall score — or any category you gate on — regresses below
@@ -142,8 +142,8 @@ crawler → parser → checks (seo/a11y/perf) → scoring → report → render
 Publishing to PyPI is a **manual** action via
 [`publish.yml`](.github/workflows/publish.yml) using **Trusted Publishing** (no API
 tokens). One-time setup on [pypi.org](https://pypi.org): *Your account → Publishing →
-Add a pending publisher* with project `pglu-site-doctor`, owner `aashishbharti04`, repo
-`pglu-site-doctor`, workflow `publish.yml`, environment `pypi`. Then run the workflow from the
+Add a pending publisher* with project `site-doctor`, owner `aashishbharti04`, repo
+`site-doctor`, workflow `publish.yml`, environment `pypi`. Then run the workflow from the
 Actions tab.
 
 ## 🛠️ Develop
@@ -162,5 +162,5 @@ New checks, output formats, or fixes are welcome — see [CONTRIBUTING.md](CONTR
 [MIT](LICENSE) © Aashish Bharti
 
 <div align="center">
-<sub>⭐ Star it if pglu-site-doctor saved you a manual audit.</sub>
+<sub>⭐ Star it if site-doctor saved you a manual audit.</sub>
 </div>

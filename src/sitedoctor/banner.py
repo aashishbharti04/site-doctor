@@ -66,9 +66,9 @@ def render_banner(color=None, unicode_ok=None, stream=None, rng=None) -> str:
         art = "\n".join(
             f"\033[1;38;5;{rng.choice(_NEON)}m{ln}{_RESET}" for ln in lines)
         tag = (f"  \033[1;38;5;{rng.choice(_NEON)}mPGLU{_RESET}"
-               f"{_DIM} {sep} pglu-site-doctor{_RESET}")
+               f"{_DIM} {sep} site-doctor{_RESET}")
     else:
-        tag = f"  PGLU {sep} pglu-site-doctor"
+        tag = f"  PGLU {sep} site-doctor"
     return f"{art}\n{tag}\n"
 
 

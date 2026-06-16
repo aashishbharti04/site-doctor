@@ -56,7 +56,7 @@ def render(report: SiteReport, color=None) -> str:
     check, cross = ("✓", "✗") if uni else ("OK", "X")
     out: list[str] = []
 
-    out.append(_c(f"\n  pglu-site-doctor — {report.start_url}", _BOLD + _CYAN, on))
+    out.append(_c(f"\n  site-doctor — {report.start_url}", _BOLD + _CYAN, on))
     out.append(_c(f"  Pages audited: {len(report.pages)}"
                   + (f"  ·  Links checked: {report.links_checked}"
                      if report.links_checked else ""), _GREY, on))

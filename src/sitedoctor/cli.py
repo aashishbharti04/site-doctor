@@ -1,4 +1,4 @@
-"""Command-line entry point for pglu-site-doctor."""
+"""Command-line entry point for site-doctor."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from .report import audit
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="pglu-site-doctor",
+        prog="site-doctor",
         description="Crawl a website and audit SEO, accessibility, performance & links.",
     )
     p.add_argument("url", help="start URL, e.g. https://example.com")
@@ -46,7 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
     color.add_argument("--no-color", dest="color", action="store_false", help="disable color")
     p.set_defaults(color=None)
     p.add_argument("--no-banner", action="store_true", help="hide the PGLU banner")
-    p.add_argument("--version", action="version", version=f"pglu-site-doctor {__version__}")
+    p.add_argument("--version", action="version", version=f"site-doctor {__version__}")
     return p
 
 

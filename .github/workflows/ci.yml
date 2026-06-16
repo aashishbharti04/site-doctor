@@ -25,5 +25,5 @@ jobs:
         run: pytest -q
       - name: CLI smoke (offline)
         run: |
-          pglu-site-doctor --version
-          pglu-site-doctor --help
+          site-doctor --version
+          site-doctor --help

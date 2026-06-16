@@ -1,12 +1,12 @@
-# 📖 pglu-site-doctor — User Manual
+# 📖 site-doctor — User Manual
 
-A beginner-friendly guide: what pglu-site-doctor is, how to install it, and how to use it.
+A beginner-friendly guide: what site-doctor is, how to install it, and how to use it.
 
 ---
 
-## What is pglu-site-doctor?
+## What is site-doctor?
 
-`pglu-site-doctor` is a command-line tool that **crawls a website and checks its health** across
+`site-doctor` is a command-line tool that **crawls a website and checks its health** across
 four areas, then gives you a score out of 100:
 
 - 🔍 **SEO** — title, meta description, headings, Open Graph, canonical, structured data,
@@ -26,12 +26,12 @@ It's perfect for quickly auditing a client site or your own project before launc
 You need **Python 3.9+**. Then, in a terminal:
 
 ```bash
-pip install pglu-site-doctor
+pip install site-doctor
 ```
 
-### ⚠️ "pglu-site-doctor is not recognized" — how to fix
+### ⚠️ "site-doctor is not recognized" — how to fix
 
-If you run `pglu-site-doctor` and Windows says *"The term 'pglu-site-doctor' is not recognized…"*,
+If you run `site-doctor` and Windows says *"The term 'site-doctor' is not recognized…"*,
 the install worked but Python's scripts folder isn't on your PATH. Two fixes:
 
 **Option A — run it this way instead (always works):**
@@ -143,8 +143,8 @@ python -m sitedoctor example.com --no-external --no-banner
 ```yaml
 # .github/workflows/site-health.yml
 - run: |
-    pip install pglu-site-doctor
-    pglu-site-doctor https://your-site.com --fail-under 80
+    pip install site-doctor
+    site-doctor https://your-site.com --fail-under 80
 ```
 
 The build fails if the health score drops below 80 — catch SEO/accessibility
@@ -156,7 +156,7 @@ regressions before they ship.
 
 | Problem | Fix |
 |---------|-----|
-| `pglu-site-doctor not recognized` | Use `python -m sitedoctor …` or add scripts to PATH (above) |
+| `site-doctor not recognized` | Use `python -m sitedoctor …` or add scripts to PATH (above) |
 | `could not fetch any HTML pages` | Check the URL is correct and reachable; try adding `https://` |
 | Audit is slow | Lower `--max-pages`, add `--no-external`, or lower `--max-links` |
 | Garbled characters on old terminals | They auto-fall back to plain ASCII; or add `--no-color` |
@@ -165,5 +165,5 @@ regressions before they ship.
 
 ## Questions or ideas?
 
-Open an issue or PR on the [repo](https://github.com/aashishbharti04/pglu-site-doctor).
+Open an issue or PR on the [repo](https://github.com/aashishbharti04/site-doctor).
 See [CONTRIBUTING.md](CONTRIBUTING.md) to add new checks.
