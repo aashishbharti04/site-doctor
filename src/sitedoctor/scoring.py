@@ -6,7 +6,8 @@ from .checks import Finding
 
 SEVERITY_PENALTY = {"error": 15, "warn": 6, "info": 1}
 
-WEIGHTS = {"seo": 0.30, "a11y": 0.30, "performance": 0.20, "links": 0.20}
+WEIGHTS = {"seo": 0.25, "a11y": 0.25, "performance": 0.15,
+           "security": 0.15, "links": 0.20}
 
 
 def category_score(findings: list[Finding], category: str) -> int:
@@ -15,7 +16,8 @@ def category_score(findings: list[Finding], category: str) -> int:
 
 
 def score_page(findings: list[Finding]) -> dict[str, int]:
-    return {c: category_score(findings, c) for c in ("seo", "a11y", "performance")}
+    return {c: category_score(findings, c)
+            for c in ("seo", "a11y", "performance", "security")}
 
 
 def links_score(total_checked: int, broken: int) -> int:
@@ -24,11 +26,13 @@ def links_score(total_checked: int, broken: int) -> int:
     return round(100 * (1 - broken / total_checked))
 
 
-def overall_score(seo: float, a11y: float, perf: float, links: float) -> float:
+def overall_score(seo: float, a11y: float, perf: float, security: float,
+                  links: float) -> float:
     return round(
         seo * WEIGHTS["seo"]
         + a11y * WEIGHTS["a11y"]
         + perf * WEIGHTS["performance"]
+        + security * WEIGHTS["security"]
         + links * WEIGHTS["links"],
         1,
     )

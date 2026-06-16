@@ -9,10 +9,13 @@ A beginner-friendly guide: what site-doctor is, how to install it, and how to us
 `site-doctor` is a command-line tool that **crawls a website and checks its health** across
 four areas, then gives you a score out of 100:
 
-- 🔍 **SEO** — title, meta description, headings, Open Graph, canonical, structured data
+- 🔍 **SEO** — title, meta description, headings, Open Graph, canonical, structured data,
+  and **duplicate titles/descriptions across pages**
 - ♿ **Accessibility** — image alt text, page language, link text, form labels
-- ⚡ **Performance** — page size, number of scripts/stylesheets, images
-- 🔗 **Broken links** — checks every internal and external link's status
+- ⚡ **Performance** — measured **page load time**, page size, scripts/stylesheets, images
+- 🔒 **Security** — HTTPS, security headers (HSTS, CSP, etc.), mixed content
+- 🔗 **Broken links** — checks every link's status (bot-blocked links are flagged
+  separately, not counted against your score)
 
 It's perfect for quickly auditing a client site or your own project before launch.
 
@@ -121,6 +124,9 @@ python -m sitedoctor example.com --no-external --no-banner
 | `--html PATH` | Also write a self-contained HTML report | — |
 | `--md PATH` | Also write a Markdown report | — |
 | `--csv PATH` | Also write a CSV of all issues & links | — |
+| `--junit PATH` | Also write a JUnit XML report (for CI) | — |
+| `--ignore CODE` | Suppress a check by code (repeatable) | — |
+| `--min-seo / --min-a11y / --min-performance / --min-security / --min-links N` | Fail if that category's score is below N | — |
 | `--json` | Print JSON instead of the report | off |
 | `--fail-under N` | Exit with an error if the score is below N (for CI) | — |
 | `--no-external` | Don't check external links | off |

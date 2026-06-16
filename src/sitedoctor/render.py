@@ -67,9 +67,9 @@ def render(report: SiteReport, color=None) -> str:
     out.append("")
 
     labels = {"seo": "SEO", "a11y": "Accessibility", "performance": "Performance",
-              "links": "Links"}
+              "security": "Security", "links": "Links"}
     width = max(len(v) for v in labels.values())
-    for key in ("seo", "a11y", "performance", "links"):
+    for key in ("seo", "a11y", "performance", "security", "links"):
         sc = report.scores.get(key, 0)
         line = (f"  {labels[key].ljust(width)}  {_bar(sc/100, 18, on, full, empty)} "
                 f"{sc:5.1f}/100")

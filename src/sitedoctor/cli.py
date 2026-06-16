@@ -33,8 +33,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--html", metavar="PATH", help="also write a self-contained HTML report")
     p.add_argument("--md", metavar="PATH", help="also write a Markdown report")
     p.add_argument("--csv", metavar="PATH", help="also write a CSV of all issues & links")
+    p.add_argument("--junit", metavar="PATH", help="also write a JUnit XML report (for CI)")
+    p.add_argument("--ignore", metavar="CODE", action="append", default=[],
+                   help="suppress a check by its code (repeatable), e.g. --ignore og-missing")
     p.add_argument("--fail-under", type=float, metavar="N", default=None,
-                   help="exit non-zero if the health score is below N (for CI)")
+                   help="exit non-zero if the overall health score is below N (for CI)")
+    for cat in ("seo", "a11y", "performance", "security", "links"):
+        p.add_argument(f"--min-{cat}", type=float, metavar="N", default=None,
+                       help=f"exit non-zero if the {cat} score is below N (for CI)")
     color = p.add_mutually_exclusive_group()
     color.add_argument("--color", dest="color", action="store_true", help="force color")
     color.add_argument("--no-color", dest="color", action="store_false", help="disable color")
@@ -94,6 +100,7 @@ def main(argv: list[str] | None = None) -> int:
         check_external=not args.no_external,
         use_sitemap=args.sitemap or bool(args.sitemap_url),
         sitemap_url=args.sitemap_url,
+        ignore=set(args.ignore),
     )
 
     if not report.pages:
@@ -114,15 +121,27 @@ def main(argv: list[str] | None = None) -> int:
         from .reporters import write_csv
         write_csv(report, args.csv)
         print(f"Wrote CSV to {args.csv}", file=sys.stderr)
+    if args.junit:
+        from .reporters import write_junit
+        write_junit(report, args.junit)
+        print(f"Wrote JUnit XML to {args.junit}", file=sys.stderr)
 
     if args.json:
         print(json.dumps(asdict(report), indent=2, default=str))
     else:
         print(render(report, color=args.color))
 
+    # CI gating: overall threshold + per-category thresholds
+    failures = []
     if args.fail_under is not None and report.overall < args.fail_under:
-        print(f"FAIL: health score {report.overall} is below --fail-under {args.fail_under}",
-              file=sys.stderr)
+        failures.append(f"overall {report.overall} < {args.fail_under}")
+    for cat, key in (("seo", "seo"), ("a11y", "a11y"), ("performance", "performance"),
+                     ("security", "security"), ("links", "links")):
+        threshold = getattr(args, f"min_{cat}")
+        if threshold is not None and report.scores.get(key, 0) < threshold:
+            failures.append(f"{cat} {report.scores.get(key, 0)} < {threshold}")
+    if failures:
+        print("FAIL: " + "; ".join(failures), file=sys.stderr)
         return 1
     return 0
 

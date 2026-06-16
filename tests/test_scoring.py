@@ -29,7 +29,7 @@ def test_category_score_floor_zero():
 
 def test_score_page_keys():
     s = score_page([])
-    assert set(s) == {"seo", "a11y", "performance"}
+    assert set(s) == {"seo", "a11y", "performance", "security"}
     assert all(v == 100 for v in s.values())
 
 
@@ -42,10 +42,10 @@ def test_links_score():
 
 def test_overall_weighted():
     # all 100 -> 100
-    assert overall_score(100, 100, 100, 100) == 100.0
-    # known weighted mix
-    assert overall_score(80, 60, 100, 50) == round(
-        80 * 0.3 + 60 * 0.3 + 100 * 0.2 + 50 * 0.2, 1)
+    assert overall_score(100, 100, 100, 100, 100) == 100.0
+    # known weighted mix (seo, a11y, perf, security, links)
+    assert overall_score(80, 60, 100, 90, 50) == round(
+        80 * 0.25 + 60 * 0.25 + 100 * 0.15 + 90 * 0.15 + 50 * 0.20, 1)
 
 
 def test_grade_bands():

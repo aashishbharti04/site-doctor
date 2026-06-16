@@ -68,14 +68,17 @@ def _pages_from_sitemap(start_url, sitemap_url, max_pages, timeout):
     from .parser import parse_html
     from .sitemap import fetch_sitemap_urls
 
+    from .crawler import _attach_meta
+
     urls = fetch_sitemap_urls(start_url, sitemap_url, timeout=timeout, limit=max_pages)
     pages = []
     for url in urls[:max_pages]:
-        _status, html, _ctype, _err = fetch(url, timeout)
-        if html is None:
+        fr = fetch(url, timeout)
+        if fr.html is None:
             continue
-        page = parse_html(html, base_url=url)
+        page = parse_html(fr.html, base_url=url)
         page.url = url
+        _attach_meta(page, fr, url)
         pages.append(page)
     return pages, 0
 
@@ -83,7 +86,8 @@ def _pages_from_sitemap(start_url, sitemap_url, max_pages, timeout):
 def audit(start_url: str, *, max_pages: int = 20, max_depth: int = 2,
           obey_robots: bool = True, timeout: int = 15, max_links: int = 200,
           check_external: bool = True, use_sitemap: bool = False,
-          sitemap_url: str | None = None) -> SiteReport:
+          sitemap_url: str | None = None, ignore: set[str] | None = None) -> SiteReport:
+    ignore = ignore or set()
     if use_sitemap:
         pages, skipped = _pages_from_sitemap(start_url, sitemap_url, max_pages, timeout)
     else:
@@ -92,12 +96,12 @@ def audit(start_url: str, *, max_pages: int = 20, max_depth: int = 2,
 
     report = SiteReport(start_url=start_url, skipped_robots=skipped)
     if not pages:
-        report.scores = {"seo": 0, "a11y": 0, "performance": 0, "links": 0}
+        report.scores = {"seo": 0, "a11y": 0, "performance": 0, "security": 0, "links": 0}
         report.grade = grade(0)
         return report
 
     for page in pages:
-        findings = run_all(page)
+        findings = [f for f in run_all(page) if f.code not in ignore]
         report.pages.append(PageReport(page.url, score_page(findings), findings))
 
     # gather links to check
@@ -116,17 +120,19 @@ def audit(start_url: str, *, max_pages: int = 20, max_depth: int = 2,
     unverified = [r for r in results if r.kind in ("blocked", "unreachable")]
 
     # cross-page (site-wide) SEO findings, e.g. duplicate titles/descriptions
-    site_findings = _cross_page_findings(pages)
+    site_findings = [f for f in _cross_page_findings(pages) if f.code not in ignore]
     site_seo_penalty = sum(SEVERITY_PENALTY[f.severity] for f in site_findings)
 
     seo = max(0.0, _avg([p.scores["seo"] for p in report.pages]) - site_seo_penalty)
     a11y = _avg([p.scores["a11y"] for p in report.pages])
     perf = _avg([p.scores["performance"] for p in report.pages])
+    security = _avg([p.scores["security"] for p in report.pages])
     # only genuinely broken links count against the score (not bot-blocked ones)
     links = links_score(len(results), len(broken))
 
-    report.scores = {"seo": round(seo, 1), "a11y": a11y, "performance": perf, "links": links}
-    report.overall = overall_score(seo, a11y, perf, links)
+    report.scores = {"seo": round(seo, 1), "a11y": a11y, "performance": perf,
+                     "security": security, "links": links}
+    report.overall = overall_score(seo, a11y, perf, security, links)
     report.grade = grade(report.overall)
     report.broken_links = broken
     report.unverified_links = unverified

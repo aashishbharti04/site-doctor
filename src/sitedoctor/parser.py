@@ -37,9 +37,16 @@ class PageData:
     has_jsonld: bool = False
     word_count: int = 0
     html_bytes: int = 0
+    resource_urls: list[str] = field(default_factory=list)  # sub-resources (js/css/img)
     # accessibility helpers
     inputs_without_label: int = 0
     total_inputs: int = 0
+    # populated by the crawler (network metadata)
+    status: int = 0
+    headers: dict[str, str] = field(default_factory=dict)    # lowercased header names
+    load_ms: float = 0.0
+    final_url: str = ""
+    is_https: bool = False
 
     @property
     def h1(self) -> list[str]:
@@ -82,15 +89,21 @@ class _Parser(HTMLParser):
                 self.data.canonical = urljoin(self.base_url, a["href"])
             if "stylesheet" in rel:
                 self.data.stylesheet_count += 1
+                if a.get("href"):
+                    self.data.resource_urls.append(a["href"])
         elif tag == "img":
-            self.data.images.append(Image(src=a.get("src", ""),
+            src = a.get("src", "")
+            self.data.images.append(Image(src=src,
                                           alt=a.get("alt") if "alt" in a else None))
+            if src:
+                self.data.resource_urls.append(src)
         elif tag == "script":
             self._in_script = True
             if a.get("type", "").lower() == "application/ld+json":
                 self.data.has_jsonld = True
             if a.get("src"):
                 self.data.script_count += 1
+                self.data.resource_urls.append(a["src"])
         elif tag == "style":
             self._in_style = True
             self.data.inline_style_blocks += 1

@@ -47,7 +47,8 @@ output JSON for dashboards, or gate your CI/CD on a minimum health score.
 |----------|----------|
 | 🔍 **SEO** | title length, meta description, single H1, canonical, Open Graph, viewport, JSON-LD, thin content |
 | ♿ **Accessibility** | `<html lang>`, image alt text, vague/empty link text, form-field labels, heading hierarchy |
-| ⚡ **Performance** | HTML size, script/stylesheet count, large inline JS, image count (heuristics from HTML) |
+| ⚡ **Performance** | measured page **load time**, HTML size, script/stylesheet count, large inline JS, image count |
+| 🔒 **Security** | HTTPS, security headers (HSTS, CSP, X-Content-Type-Options, X-Frame-Options, Referrer-Policy), mixed content |
 | 🔗 **Broken links** | parallel HTTP checks of internal **and** external links, with status codes |
 | 🗂️ **Site-wide** | duplicate `<title>` and duplicate meta descriptions across pages |
 
@@ -94,6 +95,9 @@ site-doctor mysite.com --csv issues.csv        # CSV of all issues & links (spre
 | `--html PATH` | Also write a self-contained HTML report |
 | `--md PATH` | Also write a Markdown report |
 | `--csv PATH` | Also write a CSV of all issues & links |
+| `--junit PATH` | Also write a JUnit XML report (for CI test dashboards) |
+| `--ignore CODE` | Suppress a check by code (repeatable), e.g. `--ignore og-missing` |
+| `--min-seo / --min-a11y / --min-performance / --min-security / --min-links N` | Per-category CI gates |
 | `--no-robots` | Ignore `robots.txt` (it's respected by default) |
 | `--no-external` | Don't check external links |
 | `--fail-under N` | Exit non-zero if health score < N |
@@ -106,10 +110,11 @@ site-doctor mysite.com --csv issues.csv        # CSV of all issues & links (spre
 - name: Audit site health
   run: |
     pip install site-doctor
-    site-doctor https://your-site.com --fail-under 80
+    site-doctor https://your-site.com --fail-under 80 --min-security 70 --junit site.xml
 ```
 
-The build fails if SEO/a11y/performance/links regress below your threshold.
+The build fails if the overall score — or any category you gate on — regresses below
+your threshold. Emit `--junit` XML for your CI's test dashboard.
 
 ## 🧱 How it works
 

@@ -143,8 +143,48 @@ def performance_checks(p: PageData) -> list[Finding]:
     if len(p.images) > 30:
         add("info", "many-images", f"{len(p.images)} images; ensure lazy-loading & compression.")
 
+    # real measured load time (from the crawler), when available
+    if p.load_ms > 4000:
+        add("error", "slow-response", f"Slow response ({p.load_ms/1000:.1f}s to load).")
+    elif p.load_ms > 2000:
+        add("warn", "slow-response", f"Response took {p.load_ms/1000:.1f}s; aim for < 2s.")
+
+    return f
+
+
+# ---------------------------------------------------------------------------
+# Security
+# ---------------------------------------------------------------------------
+def security_checks(p: PageData) -> list[Finding]:
+    f: list[Finding] = []
+    add = lambda s, c, m: f.append(Finding("security", s, c, m))
+
+    if p.final_url and not p.is_https:
+        add("error", "no-https", "Page is served over HTTP, not HTTPS.")
+
+    # mixed content: absolute http:// sub-resources on an https page
+    if p.is_https:
+        mixed = [u for u in p.resource_urls if u.startswith("http://")]
+        if mixed:
+            add("error", "mixed-content",
+                f"{len(mixed)} sub-resource(s) loaded over insecure HTTP.")
+
+    # security headers (only meaningful when we actually fetched the page)
+    h = p.headers
+    if h:
+        if p.is_https and "strict-transport-security" not in h:
+            add("warn", "hsts-missing", "Missing Strict-Transport-Security (HSTS) header.")
+        if "content-security-policy" not in h:
+            add("warn", "csp-missing", "Missing Content-Security-Policy header.")
+        if "x-content-type-options" not in h:
+            add("warn", "xcto-missing", "Missing X-Content-Type-Options: nosniff header.")
+        if "x-frame-options" not in h and "content-security-policy" not in h:
+            add("warn", "xfo-missing", "Missing X-Frame-Options (clickjacking protection).")
+        if "referrer-policy" not in h:
+            add("info", "referrer-missing", "Missing Referrer-Policy header.")
+
     return f
 
 
 def run_all(p: PageData) -> list[Finding]:
-    return seo_checks(p) + a11y_checks(p) + performance_checks(p)
+    return seo_checks(p) + a11y_checks(p) + performance_checks(p) + security_checks(p)

@@ -41,6 +41,7 @@ def to_markdown(report: SiteReport) -> str:
         f"| SEO | {s.get('seo', 0):.1f} |",
         f"| Accessibility | {s.get('a11y', 0):.1f} |",
         f"| Performance | {s.get('performance', 0):.1f} |",
+        f"| Security | {s.get('security', 0):.1f} |",
         f"| Links | {s.get('links', 0):.1f} |",
         "",
         "## Issues",
@@ -83,6 +84,54 @@ def write_csv(report: SiteReport, path: str) -> None:
             w.writerow(["broken-link", r.url, "links", "error", r.status, r.error])
         for r in report.unverified_links:
             w.writerow(["unverified-link", r.url, "links", "info", r.status, r.error])
+
+
+# ---------------------------------------------------------------------------
+# JUnit XML (for CI systems: Jenkins, GitLab, GitHub Actions test reports)
+# ---------------------------------------------------------------------------
+def to_junit(report: SiteReport) -> str:
+    e = _html.escape
+
+    def esc_attr(s: str) -> str:
+        return _html.escape(str(s), quote=True)
+
+    cases: list[str] = []
+    # one test case per finding (errors/warns fail, info passes)
+    for p in report.pages:
+        for f in p.findings:
+            name = f"{f.category}:{f.code}"
+            classname = e(p.url)
+            if f.severity in ("error", "warn"):
+                cases.append(
+                    f'<testcase name="{esc_attr(name)}" classname="{esc_attr(classname)}">'
+                    f'<failure message="{esc_attr(f.message)}">{e(f.message)}</failure>'
+                    f"</testcase>")
+            else:
+                cases.append(
+                    f'<testcase name="{esc_attr(name)}" classname="{esc_attr(classname)}"/>')
+    for f in report.site_findings:
+        cases.append(
+            f'<testcase name="site:{esc_attr(f.code)}" classname="{esc_attr(report.start_url)}">'
+            f'<failure message="{esc_attr(f.message)}">{e(f.message)}</failure></testcase>')
+    for r in report.broken_links:
+        cases.append(
+            f'<testcase name="broken-link" classname="{esc_attr(r.url)}">'
+            f'<failure message="{esc_attr(str(r.status) + " " + (r.error or ""))}">'
+            f"{e(r.url)}</failure></testcase>")
+
+    failures = sum(1 for c in cases if "<failure" in c)
+    body = "\n  ".join(cases)
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        f'<testsuite name="site-doctor" tests="{len(cases)}" failures="{failures}">\n'
+        f"  {body}\n"
+        "</testsuite>\n"
+    )
+
+
+def write_junit(report: SiteReport, path: str) -> None:
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(to_junit(report))
 
 
 # ---------------------------------------------------------------------------
@@ -159,6 +208,7 @@ def to_html(report: SiteReport) -> str:
   {cat_row("SEO", s.get("seo", 0))}
   {cat_row("Accessibility", s.get("a11y", 0))}
   {cat_row("Performance", s.get("performance", 0))}
+  {cat_row("Security", s.get("security", 0))}
   {cat_row("Links", s.get("links", 0))}
 
   <h2>Issues</h2>
