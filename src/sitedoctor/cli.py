@@ -37,6 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
     color.add_argument("--color", dest="color", action="store_true", help="force color")
     color.add_argument("--no-color", dest="color", action="store_false", help="disable color")
     p.set_defaults(color=None)
+    p.add_argument("--no-banner", action="store_true", help="hide the PGLU banner")
     p.add_argument("--version", action="version", version=f"site-doctor {__version__}")
     return p
 
@@ -48,12 +49,18 @@ def _normalize(url: str) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-    except (AttributeError, ValueError, OSError):
-        pass
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError, OSError):
+            pass
 
     args = build_parser().parse_args(argv)
+
+    if not args.no_banner:
+        from .banner import print_banner
+        print_banner(color=args.color)
+
     url = _normalize(args.url)
 
     report = audit(

@@ -87,6 +87,7 @@ site-doctor mysite.com --md report.md          # Markdown report
 | `--no-external` | Don't check external links |
 | `--fail-under N` | Exit non-zero if health score < N |
 | `--json` / `--no-color` | JSON output / plain text |
+| `--no-banner` | Hide the PGLU banner |
 
 ## 🤖 Gate your deploys on site health (GitHub Actions)
 
