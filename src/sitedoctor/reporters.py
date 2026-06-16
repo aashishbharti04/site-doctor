@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv as _csv
 import html as _html
 from collections import Counter
 
@@ -62,6 +63,26 @@ def to_markdown(report: SiteReport) -> str:
         out.append("No broken links found. ✅")
     out.append("")
     return "\n".join(out)
+
+
+# ---------------------------------------------------------------------------
+# CSV
+# ---------------------------------------------------------------------------
+def write_csv(report: SiteReport, path: str) -> None:
+    """Write all issues and links to a CSV (great for spreadsheets/clients)."""
+    with open(path, "w", newline="", encoding="utf-8") as fh:
+        w = _csv.writer(fh)
+        w.writerow(["type", "page_or_url", "category", "severity", "code", "message"])
+        for p in report.pages:
+            for f in p.findings:
+                w.writerow(["issue", p.url, f.category, f.severity, f.code, f.message])
+        for f in report.site_findings:
+            w.writerow(["site-issue", report.start_url, f.category, f.severity,
+                        f.code, f.message])
+        for r in report.broken_links:
+            w.writerow(["broken-link", r.url, "links", "error", r.status, r.error])
+        for r in report.unverified_links:
+            w.writerow(["unverified-link", r.url, "links", "info", r.status, r.error])
 
 
 # ---------------------------------------------------------------------------

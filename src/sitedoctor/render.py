@@ -83,6 +83,9 @@ def render(report: SiteReport, color=None) -> str:
         for f in p.findings:
             counter[(f.category, f.severity, f.code)] += 1
             examples.setdefault((f.category, f.severity, f.code), f.message)
+    for f in report.site_findings:  # cross-page (site-wide) issues
+        counter[(f.category, f.severity, f.code)] += 1
+        examples[(f.category, f.severity, f.code)] = f.message
 
     if counter:
         out.append(_c("  Top issues", _BOLD + _MAGENTA, on))
@@ -107,6 +110,17 @@ def render(report: SiteReport, color=None) -> str:
             out.append(_c(f"  …and {len(report.broken_links) - 15} more", _GREY, on))
     else:
         out.append(_c(f"  No broken links. {check}", _GREEN, on))
+
+    if report.unverified_links:
+        out.append("")
+        out.append(_c(f"  Could not verify ({len(report.unverified_links)}) "
+                      "— bot-blocked or unreachable, not counted against score",
+                      _BOLD + _YELLOW, on))
+        for r in report.unverified_links[:8]:
+            status = r.status or r.error or "error"
+            out.append(_c(f"  ? {status}  {r.url}", _GREY, on))
+        if len(report.unverified_links) > 8:
+            out.append(_c(f"  …and {len(report.unverified_links) - 8} more", _GREY, on))
 
     if report.links_truncated:
         out.append(_c(f"  (note: {report.links_truncated} extra links not checked "

@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from .checks import Finding, run_all
 from .crawler import crawl
 from .links import LinkResult, check_links
-from .scoring import grade, links_score, overall_score, score_page
+from .scoring import SEVERITY_PENALTY, grade, links_score, overall_score, score_page
 
 
 @dataclass
@@ -25,9 +25,37 @@ class SiteReport:
     overall: float = 0.0
     grade: str = ""
     broken_links: list[LinkResult] = field(default_factory=list)
+    unverified_links: list[LinkResult] = field(default_factory=list)
+    site_findings: list[Finding] = field(default_factory=list)   # cross-page issues
     links_checked: int = 0
     links_truncated: int = 0
     skipped_robots: int = 0
+
+
+def _cross_page_findings(pages) -> list[Finding]:
+    """Site-wide SEO checks that need all pages at once (duplicate title/meta)."""
+    findings: list[Finding] = []
+    from collections import defaultdict
+
+    titles = defaultdict(list)
+    descs = defaultdict(list)
+    for p in pages:
+        title = (p.title or "").strip()
+        desc = (p.meta.get("description", "") or "").strip()
+        if title:
+            titles[title].append(p.url)
+        if desc:
+            descs[desc].append(p.url)
+
+    for title, urls in titles.items():
+        if len(urls) > 1:
+            findings.append(Finding("seo", "warn", "duplicate-title",
+                                    f'Duplicate <title> on {len(urls)} pages: "{title[:50]}"'))
+    for _desc, urls in descs.items():
+        if len(urls) > 1:
+            findings.append(Finding("seo", "warn", "duplicate-meta-desc",
+                                    f"Duplicate meta description on {len(urls)} pages."))
+    return findings
 
 
 def _avg(values: list[int]) -> float:
@@ -84,17 +112,25 @@ def audit(start_url: str, *, max_pages: int = 20, max_depth: int = 2,
 
     results, truncated = check_links(all_links, timeout=min(timeout, 10),
                                      max_links=max_links)
-    broken = [r for r in results if not r.ok]
+    broken = [r for r in results if r.kind == "broken"]
+    unverified = [r for r in results if r.kind in ("blocked", "unreachable")]
 
-    seo = _avg([p.scores["seo"] for p in report.pages])
+    # cross-page (site-wide) SEO findings, e.g. duplicate titles/descriptions
+    site_findings = _cross_page_findings(pages)
+    site_seo_penalty = sum(SEVERITY_PENALTY[f.severity] for f in site_findings)
+
+    seo = max(0.0, _avg([p.scores["seo"] for p in report.pages]) - site_seo_penalty)
     a11y = _avg([p.scores["a11y"] for p in report.pages])
     perf = _avg([p.scores["performance"] for p in report.pages])
+    # only genuinely broken links count against the score (not bot-blocked ones)
     links = links_score(len(results), len(broken))
 
-    report.scores = {"seo": seo, "a11y": a11y, "performance": perf, "links": links}
+    report.scores = {"seo": round(seo, 1), "a11y": a11y, "performance": perf, "links": links}
     report.overall = overall_score(seo, a11y, perf, links)
     report.grade = grade(report.overall)
     report.broken_links = broken
+    report.unverified_links = unverified
+    report.site_findings = site_findings
     report.links_checked = len(results)
     report.links_truncated = truncated
     return report

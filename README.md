@@ -49,8 +49,14 @@ output JSON for dashboards, or gate your CI/CD on a minimum health score.
 | ♿ **Accessibility** | `<html lang>`, image alt text, vague/empty link text, form-field labels, heading hierarchy |
 | ⚡ **Performance** | HTML size, script/stylesheet count, large inline JS, image count (heuristics from HTML) |
 | 🔗 **Broken links** | parallel HTTP checks of internal **and** external links, with status codes |
+| 🗂️ **Site-wide** | duplicate `<title>` and duplicate meta descriptions across pages |
 
 Plus a weighted **overall health score** and letter grade.
+
+**Smart link checking:** genuinely broken links (4xx/5xx) hurt your score, but links that
+merely **can't be verified** — bot-blocked (LinkedIn `999`, social WAFs) or unreachable —
+are reported separately and **don't** unfairly tank your score. Crawling is **concurrent**,
+and ANSI colors work even in legacy Windows consoles.
 
 ## 🚀 Install
 
@@ -72,6 +78,7 @@ site-doctor mysite.com --fail-under 80         # exit 1 if score < 80  (great fo
 site-doctor mysite.com --sitemap               # audit every URL in /sitemap.xml
 site-doctor mysite.com --html report.html      # client-ready HTML report
 site-doctor mysite.com --md report.md          # Markdown report
+site-doctor mysite.com --csv issues.csv        # CSV of all issues & links (spreadsheets)
 ```
 
 ### Options
@@ -86,6 +93,7 @@ site-doctor mysite.com --md report.md          # Markdown report
 | `--sitemap-url URL` | Use an explicit sitemap URL (implies `--sitemap`) |
 | `--html PATH` | Also write a self-contained HTML report |
 | `--md PATH` | Also write a Markdown report |
+| `--csv PATH` | Also write a CSV of all issues & links |
 | `--no-robots` | Ignore `robots.txt` (it's respected by default) |
 | `--no-external` | Don't check external links |
 | `--fail-under N` | Exit non-zero if health score < N |

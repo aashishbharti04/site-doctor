@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import urllib.error
 import urllib.request
-from collections import deque
 from urllib.robotparser import RobotFileParser
 from urllib.parse import urljoin, urldefrag, urlparse
 
@@ -47,39 +46,51 @@ def _robots_for(start_url: str, obey: bool):
 
 
 def crawl(start_url: str, max_pages: int = 20, max_depth: int = 2,
-          obey_robots: bool = True, timeout: int = 15):
-    """Crawl same-domain HTML pages. Returns (pages, skipped_robots)."""
+          obey_robots: bool = True, timeout: int = 15, workers: int = 8):
+    """Crawl same-domain HTML pages concurrently, level by level (BFS).
+
+    Returns (pages, skipped_robots).
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
     rp = _robots_for(start_url, obey_robots)
-    seen: set[str] = set()
+    seen: set[str] = {urldefrag(start_url).url}
     pages: list[PageData] = []
     skipped_robots = 0
-    queue: deque[tuple[str, int]] = deque([(urldefrag(start_url).url, 0)])
+    frontier = [urldefrag(start_url).url]
+    depth = 0
 
-    while queue and len(pages) < max_pages:
-        url, depth = queue.popleft()
-        if url in seen:
-            continue
-        seen.add(url)
+    with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
+        while frontier and depth <= max_depth and len(pages) < max_pages:
+            # respect robots.txt for this level
+            allowed = []
+            for url in frontier:
+                if rp is not None and not rp.can_fetch(USER_AGENT, url):
+                    skipped_robots += 1
+                else:
+                    allowed.append(url)
 
-        if rp is not None and not rp.can_fetch(USER_AGENT, url):
-            skipped_robots += 1
-            continue
+            remaining = max_pages - len(pages)
+            allowed = allowed[:remaining]
 
-        status, html, _ctype, err = fetch(url, timeout)
-        if html is None:
-            # Non-HTML or failed fetch: don't score it as a page. A bad status on
-            # an internal URL still surfaces through the broken-link checker.
-            continue
+            fetched = list(pool.map(lambda u: (u, fetch(u, timeout)), allowed))
 
-        page = parse_html(html, base_url=url)
-        page.url = url
-        pages.append(page)
+            next_frontier: list[str] = []
+            for url, (_status, html, _ctype, _err) in fetched:
+                if html is None:
+                    continue
+                page = parse_html(html, base_url=url)
+                page.url = url
+                pages.append(page)
+                if depth < max_depth:
+                    for link in page.links:
+                        target = urldefrag(link.href).url
+                        if (target not in seen and same_domain(target, start_url)
+                                and target.startswith(("http://", "https://"))):
+                            seen.add(target)
+                            next_frontier.append(target)
 
-        if depth < max_depth:
-            for link in page.links:
-                target = urldefrag(link.href).url
-                if target not in seen and same_domain(target, start_url):
-                    if target.startswith(("http://", "https://")):
-                        queue.append((target, depth + 1))
+            frontier = next_frontier
+            depth += 1
 
     return pages, skipped_robots

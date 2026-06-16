@@ -96,6 +96,9 @@ python -m sitedoctor example.com --html report.html
 # also save a Markdown report
 python -m sitedoctor example.com --md report.md
 
+# export a CSV of all issues & links (open in Excel/Sheets)
+python -m sitedoctor example.com --csv issues.csv
+
 # machine-readable JSON (for scripts/dashboards)
 python -m sitedoctor example.com --json > report.json
 
@@ -117,6 +120,7 @@ python -m sitedoctor example.com --no-external --no-banner
 | `--sitemap-url URL` | Use a specific sitemap URL (implies `--sitemap`) | — |
 | `--html PATH` | Also write a self-contained HTML report | — |
 | `--md PATH` | Also write a Markdown report | — |
+| `--csv PATH` | Also write a CSV of all issues & links | — |
 | `--json` | Print JSON instead of the report | off |
 | `--fail-under N` | Exit with an error if the score is below N (for CI) | — |
 | `--no-external` | Don't check external links | off |

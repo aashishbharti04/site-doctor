@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from dataclasses import asdict
 
@@ -31,6 +32,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--json", action="store_true", help="output JSON instead of a report")
     p.add_argument("--html", metavar="PATH", help="also write a self-contained HTML report")
     p.add_argument("--md", metavar="PATH", help="also write a Markdown report")
+    p.add_argument("--csv", metavar="PATH", help="also write a CSV of all issues & links")
     p.add_argument("--fail-under", type=float, metavar="N", default=None,
                    help="exit non-zero if the health score is below N (for CI)")
     color = p.add_mutually_exclusive_group()
@@ -40,6 +42,24 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-banner", action="store_true", help="hide the PGLU banner")
     p.add_argument("--version", action="version", version=f"site-doctor {__version__}")
     return p
+
+
+def _enable_windows_ansi() -> None:
+    """Turn on ANSI escape processing in legacy Windows consoles (conhost)."""
+    if os.name != "nt":
+        return
+    try:
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32
+        for handle_id in (-11, -12):  # STD_OUTPUT_HANDLE, STD_ERROR_HANDLE
+            handle = kernel32.GetStdHandle(handle_id)
+            mode = ctypes.c_uint32()
+            if kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+                # 0x0004 = ENABLE_VIRTUAL_TERMINAL_PROCESSING
+                kernel32.SetConsoleMode(handle, mode.value | 0x0004)
+    except Exception:  # noqa: BLE001 - never let this break the tool
+        pass
 
 
 def _normalize(url: str) -> str:
@@ -54,6 +74,7 @@ def main(argv: list[str] | None = None) -> int:
             stream.reconfigure(encoding="utf-8")
         except (AttributeError, ValueError, OSError):
             pass
+    _enable_windows_ansi()
 
     args = build_parser().parse_args(argv)
 
@@ -89,6 +110,10 @@ def main(argv: list[str] | None = None) -> int:
         with open(args.md, "w", encoding="utf-8") as fh:
             fh.write(to_markdown(report))
         print(f"Wrote Markdown report to {args.md}", file=sys.stderr)
+    if args.csv:
+        from .reporters import write_csv
+        write_csv(report, args.csv)
+        print(f"Wrote CSV to {args.csv}", file=sys.stderr)
 
     if args.json:
         print(json.dumps(asdict(report), indent=2, default=str))
