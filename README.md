@@ -110,6 +110,9 @@ site-doctor mysite.com --csv issues.csv        # CSV of all issues & links (spre
 | `--min-seo / --min-a11y / --min-performance / --min-security / --min-links N` | Per-category CI gates |
 | `--no-robots` | Ignore `robots.txt` (it's respected by default) |
 | `--no-external` | Don't check external links |
+| `--browser-ua` | Send a desktop-browser User-Agent (for sites that block bots) |
+| `--user-agent UA` | Custom User-Agent string |
+| `--insecure` | Skip TLS certificate verification (fixes cert errors) |
 | `--fail-under N` | Exit non-zero if health score < N |
 | `--json` / `--no-color` | JSON output / plain text |
 | `--no-banner` | Hide the PGLU banner |

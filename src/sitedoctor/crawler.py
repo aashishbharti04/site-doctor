@@ -32,18 +32,32 @@ def _lower_headers(resp) -> dict:
         return {}
 
 
-def fetch(url: str, timeout: int = 15) -> FetchResult:
+def _ssl_context(insecure: bool):
+    if not insecure:
+        return None
+    import ssl
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    return ctx
+
+
+def fetch(url: str, timeout: int = 15, user_agent: str | None = None,
+          insecure: bool = False) -> FetchResult:
     """Fetch a URL, returning a FetchResult with timing, headers and final URL."""
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    req = urllib.request.Request(url, headers={"User-Agent": user_agent or USER_AGENT})
+    ctx = _ssl_context(insecure)
     start = time.perf_counter()
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
             ctype = resp.headers.get("Content-Type", "")
             headers = _lower_headers(resp)
             final_url = resp.url
             if "text/html" not in ctype:
                 elapsed = (time.perf_counter() - start) * 1000
-                return FetchResult(resp.status, None, ctype, None, headers, elapsed, final_url)
+                return FetchResult(resp.status, None, ctype,
+                                   f"non-HTML content ({ctype or 'unknown'})",
+                                   headers, elapsed, final_url)
             raw = resp.read(3_000_000)  # cap at ~3 MB
             charset = resp.headers.get_content_charset() or "utf-8"
             elapsed = (time.perf_counter() - start) * 1000
@@ -81,7 +95,8 @@ def _robots_for(start_url: str, obey: bool):
 
 
 def crawl(start_url: str, max_pages: int = 20, max_depth: int = 2,
-          obey_robots: bool = True, timeout: int = 15, workers: int = 8):
+          obey_robots: bool = True, timeout: int = 15, workers: int = 8,
+          user_agent: str | None = None, insecure: bool = False):
     """Crawl same-domain HTML pages concurrently, level by level (BFS).
 
     Returns (pages, skipped_robots).
@@ -108,7 +123,8 @@ def crawl(start_url: str, max_pages: int = 20, max_depth: int = 2,
             remaining = max_pages - len(pages)
             allowed = allowed[:remaining]
 
-            fetched = list(pool.map(lambda u: (u, fetch(u, timeout)), allowed))
+            fetched = list(pool.map(
+                lambda u: (u, fetch(u, timeout, user_agent, insecure)), allowed))
 
             next_frontier: list[str] = []
             for url, fr in fetched:

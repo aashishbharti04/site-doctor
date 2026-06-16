@@ -130,6 +130,9 @@ python -m sitedoctor example.com --no-external --no-banner
 | `--json` | Print JSON instead of the report | off |
 | `--fail-under N` | Exit with an error if the score is below N (for CI) | — |
 | `--no-external` | Don't check external links | off |
+| `--browser-ua` | Send a desktop-browser User-Agent (for sites that block bots) | off |
+| `--user-agent UA` | Custom User-Agent string | — |
+| `--insecure` | Skip TLS certificate verification | off |
 | `--no-robots` | Ignore `robots.txt` | off |
 | `--no-color` | Plain text, no colors | off |
 | `--no-banner` | Hide the PGLU banner | off |
@@ -157,7 +160,9 @@ regressions before they ship.
 | Problem | Fix |
 |---------|-----|
 | `site-doctor not recognized` | Use `python -m sitedoctor …` or add scripts to PATH (above) |
-| `could not fetch any HTML pages` | Check the URL is correct and reachable; try adding `https://` |
+| `could not fetch any HTML pages` | The tool now prints the real reason + a hint. Common fixes: `--browser-ua` (site blocks bots), `--insecure` (TLS cert error), bigger `--timeout` (slow site). |
+| Works in my browser but not here | A WAF/firewall is likely blocking automated requests — try `--browser-ua`. |
+| `certificate verify failed` | Add `--insecure`, or update your system/Python CA certificates. |
 | Audit is slow | Lower `--max-pages`, add `--no-external`, or lower `--max-links` |
 | Garbled characters on old terminals | They auto-fall back to plain ASCII; or add `--no-color` |
 

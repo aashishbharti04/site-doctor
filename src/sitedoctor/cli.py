@@ -29,6 +29,12 @@ def build_parser() -> argparse.ArgumentParser:
                    help="explicit sitemap URL (implies --sitemap)")
     p.add_argument("--no-robots", action="store_true", help="ignore robots.txt")
     p.add_argument("--no-external", action="store_true", help="skip checking external links")
+    p.add_argument("--user-agent", metavar="UA",
+                   help="custom User-Agent (some sites block non-browser agents)")
+    p.add_argument("--browser-ua", action="store_true",
+                   help="send a common desktop-browser User-Agent")
+    p.add_argument("--insecure", action="store_true",
+                   help="skip TLS certificate verification (fixes cert errors)")
     p.add_argument("--json", action="store_true", help="output JSON instead of a report")
     p.add_argument("--html", metavar="PATH", help="also write a self-contained HTML report")
     p.add_argument("--md", metavar="PATH", help="also write a Markdown report")
@@ -74,6 +80,36 @@ def _normalize(url: str) -> str:
     return url
 
 
+def _explain_fetch_failure(url: str, args, user_agent) -> None:
+    """Probe the start URL once and print the real reason it couldn't be audited."""
+    from .crawler import fetch
+
+    fr = fetch(url, args.timeout, user_agent, args.insecure)
+    reason = fr.error or (f"HTTP {fr.status}" if fr.status else "unknown error")
+    print(f"error: could not fetch any HTML pages from {url}\n  reason: {reason}",
+          file=sys.stderr)
+
+    low = (reason or "").lower()
+    hints = []
+    if "certificate" in low or "ssl" in low or "verify" in low:
+        hints.append("TLS certificate problem — retry with --insecure, "
+                     "or update your system/Python CA certificates.")
+    if "403" in low or "forbidden" in low or "406" in low or "blocked" in low:
+        hints.append("the site may block bots — retry with --browser-ua "
+                     "(or --user-agent \"…\").")
+    if "timed out" in low or "timeout" in low:
+        hints.append("the site was slow — retry with a larger --timeout.")
+    if "non-html" in low:
+        hints.append("the start URL isn't an HTML page — point at a real page URL.")
+    if "name or service" in low or "getaddrinfo" in low or "resolve" in low:
+        hints.append("DNS couldn't resolve the host — check the URL/your connection.")
+    if not hints:
+        hints.append("try --browser-ua and/or --insecure; if it loads in your browser "
+                     "but not here, a WAF/firewall may be blocking automated requests.")
+    for h in hints:
+        print(f"  hint: {h}", file=sys.stderr)
+
+
 def main(argv: list[str] | None = None) -> int:
     for stream in (sys.stdout, sys.stderr):
         try:
@@ -90,6 +126,11 @@ def main(argv: list[str] | None = None) -> int:
 
     url = _normalize(args.url)
 
+    user_agent = args.user_agent
+    if args.browser_ua and not user_agent:
+        user_agent = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
+
     report = audit(
         url,
         max_pages=args.max_pages,
@@ -101,10 +142,12 @@ def main(argv: list[str] | None = None) -> int:
         use_sitemap=args.sitemap or bool(args.sitemap_url),
         sitemap_url=args.sitemap_url,
         ignore=set(args.ignore),
+        user_agent=user_agent,
+        insecure=args.insecure,
     )
 
     if not report.pages:
-        print(f"error: could not fetch any HTML pages from {url}", file=sys.stderr)
+        _explain_fetch_failure(url, args, user_agent)
         return 2
 
     if args.html:

@@ -62,7 +62,8 @@ def _avg(values: list[int]) -> float:
     return round(sum(values) / len(values), 1) if values else 100.0
 
 
-def _pages_from_sitemap(start_url, sitemap_url, max_pages, timeout):
+def _pages_from_sitemap(start_url, sitemap_url, max_pages, timeout,
+                        user_agent=None, insecure=False):
     """Fetch and parse the pages listed in a site's sitemap (no link-following)."""
     from .crawler import fetch
     from .parser import parse_html
@@ -73,7 +74,7 @@ def _pages_from_sitemap(start_url, sitemap_url, max_pages, timeout):
     urls = fetch_sitemap_urls(start_url, sitemap_url, timeout=timeout, limit=max_pages)
     pages = []
     for url in urls[:max_pages]:
-        fr = fetch(url, timeout)
+        fr = fetch(url, timeout, user_agent, insecure)
         if fr.html is None:
             continue
         page = parse_html(fr.html, base_url=url)
@@ -86,13 +87,16 @@ def _pages_from_sitemap(start_url, sitemap_url, max_pages, timeout):
 def audit(start_url: str, *, max_pages: int = 20, max_depth: int = 2,
           obey_robots: bool = True, timeout: int = 15, max_links: int = 200,
           check_external: bool = True, use_sitemap: bool = False,
-          sitemap_url: str | None = None, ignore: set[str] | None = None) -> SiteReport:
+          sitemap_url: str | None = None, ignore: set[str] | None = None,
+          user_agent: str | None = None, insecure: bool = False) -> SiteReport:
     ignore = ignore or set()
     if use_sitemap:
-        pages, skipped = _pages_from_sitemap(start_url, sitemap_url, max_pages, timeout)
+        pages, skipped = _pages_from_sitemap(start_url, sitemap_url, max_pages, timeout,
+                                             user_agent, insecure)
     else:
         pages, skipped = crawl(start_url, max_pages=max_pages, max_depth=max_depth,
-                               obey_robots=obey_robots, timeout=timeout)
+                               obey_robots=obey_robots, timeout=timeout,
+                               user_agent=user_agent, insecure=insecure)
 
     report = SiteReport(start_url=start_url, skipped_robots=skipped)
     if not pages:
