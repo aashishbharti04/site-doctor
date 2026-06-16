@@ -65,6 +65,10 @@ site-doctor https://mysite.com --max-pages 50 --max-depth 3
 site-doctor mysite.com --json > report.json    # machine-readable
 site-doctor mysite.com --no-external           # skip external link checks (faster)
 site-doctor mysite.com --fail-under 80         # exit 1 if score < 80  (great for CI)
+
+site-doctor mysite.com --sitemap               # audit every URL in /sitemap.xml
+site-doctor mysite.com --html report.html      # client-ready HTML report
+site-doctor mysite.com --md report.md          # Markdown report
 ```
 
 ### Options
@@ -75,6 +79,10 @@ site-doctor mysite.com --fail-under 80         # exit 1 if score < 80  (great fo
 | `--max-depth N` | Max crawl depth (default 2) |
 | `--max-links N` | Max links to check (default 200) |
 | `--timeout N` | Per-request timeout in seconds (default 15) |
+| `--sitemap` | Audit URLs from `sitemap.xml` instead of crawling |
+| `--sitemap-url URL` | Use an explicit sitemap URL (implies `--sitemap`) |
+| `--html PATH` | Also write a self-contained HTML report |
+| `--md PATH` | Also write a Markdown report |
 | `--no-robots` | Ignore `robots.txt` (it's respected by default) |
 | `--no-external` | Don't check external links |
 | `--fail-under N` | Exit non-zero if health score < N |

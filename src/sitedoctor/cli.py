@@ -22,9 +22,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--max-depth", type=int, default=2, help="max crawl depth (default 2)")
     p.add_argument("--max-links", type=int, default=200, help="max links to check (default 200)")
     p.add_argument("--timeout", type=int, default=15, help="per-request timeout secs (default 15)")
+    p.add_argument("--sitemap", action="store_true",
+                   help="audit URLs from the site's sitemap.xml instead of crawling")
+    p.add_argument("--sitemap-url", metavar="URL",
+                   help="explicit sitemap URL (implies --sitemap)")
     p.add_argument("--no-robots", action="store_true", help="ignore robots.txt")
     p.add_argument("--no-external", action="store_true", help="skip checking external links")
     p.add_argument("--json", action="store_true", help="output JSON instead of a report")
+    p.add_argument("--html", metavar="PATH", help="also write a self-contained HTML report")
+    p.add_argument("--md", metavar="PATH", help="also write a Markdown report")
     p.add_argument("--fail-under", type=float, metavar="N", default=None,
                    help="exit non-zero if the health score is below N (for CI)")
     color = p.add_mutually_exclusive_group()
@@ -58,11 +64,24 @@ def main(argv: list[str] | None = None) -> int:
         timeout=args.timeout,
         max_links=args.max_links,
         check_external=not args.no_external,
+        use_sitemap=args.sitemap or bool(args.sitemap_url),
+        sitemap_url=args.sitemap_url,
     )
 
     if not report.pages:
         print(f"error: could not fetch any HTML pages from {url}", file=sys.stderr)
         return 2
+
+    if args.html:
+        from .reporters import to_html
+        with open(args.html, "w", encoding="utf-8") as fh:
+            fh.write(to_html(report))
+        print(f"Wrote HTML report to {args.html}", file=sys.stderr)
+    if args.md:
+        from .reporters import to_markdown
+        with open(args.md, "w", encoding="utf-8") as fh:
+            fh.write(to_markdown(report))
+        print(f"Wrote Markdown report to {args.md}", file=sys.stderr)
 
     if args.json:
         print(json.dumps(asdict(report), indent=2, default=str))
